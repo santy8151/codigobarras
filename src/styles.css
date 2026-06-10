@@ -142,3 +142,25 @@
     color: var(--color-foreground);
   }
 }
+
+/* Print */
+.print-only { display: none; }
+
+@media print {
+  @page { margin: 0; }
+  body { background: white !important; }
+  .no-print { display: none !important; }
+  body.printing > div > header,
+  body.printing > div > div.flex-1 { display: none !important; }
+  .print-only { display: block !important; }
+  .print-label {
+    page-break-after: always;
+    break-after: page;
+    overflow: hidden;
+    position: relative;
+  }
+  .print-label:last-child {
+    page-break-after: auto;
+  }
+}
+
