@@ -242,9 +242,10 @@ export function LabelEditor() {
         {/* Canvas */}
         <div className="flex-1 flex items-center justify-center p-6 lg:p-10">
           <div className="flex flex-col items-center gap-4">
-            <div className="text-xs text-muted-foreground">
-              {design.widthIn}" × {design.heightIn}" — Vista previa
+          <div className="text-xs text-muted-foreground">
+              {inToCm(design.widthIn).toFixed(1)} × {inToCm(design.heightIn).toFixed(1)} cm — Vista previa
             </div>
+
             <LabelCanvas
               design={design}
               row={previewRow}
