@@ -36,5 +36,11 @@ export function Barcode({
     }
   }, [value, format, width, height, displayValue, fontSize]);
 
-  return <svg ref={ref} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <svg
+      ref={ref}
+      preserveAspectRatio="none"
+      style={{ width: "100%", height: "100%", display: "block" }}
+    />
+  );
 }
