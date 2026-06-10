@@ -328,7 +328,7 @@ export function LabelEditor() {
                     }
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Para rollo DigitalPOS de 2 columnas usa <strong>2</strong>.
+                    Usa <strong>1</strong> para impresoras térmicas DigitalPOS (una etiqueta por hoja). Usa 2+ solo si imprimes en hoja A4/Carta.
                   </p>
                 </div>
               </div>
