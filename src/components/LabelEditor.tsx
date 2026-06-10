@@ -292,26 +292,44 @@ export function LabelEditor() {
             <TabsContent value="label" className="px-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Ancho (in)</Label>
+                  <Label>Ancho (cm)</Label>
                   <Input
                     type="number"
                     step="0.1"
-                    value={design.widthIn}
+                    value={inToCm(design.widthIn).toFixed(2)}
                     onChange={(e) =>
-                      setDesign({ ...design, widthIn: parseFloat(e.target.value) || 1 })
+                      setDesign({ ...design, widthIn: cmToIn(parseFloat(e.target.value) || 1) })
                     }
                   />
                 </div>
                 <div>
-                  <Label>Alto (in)</Label>
+                  <Label>Alto (cm)</Label>
                   <Input
                     type="number"
                     step="0.1"
-                    value={design.heightIn}
+                    value={inToCm(design.heightIn).toFixed(2)}
                     onChange={(e) =>
-                      setDesign({ ...design, heightIn: parseFloat(e.target.value) || 1 })
+                      setDesign({ ...design, heightIn: cmToIn(parseFloat(e.target.value) || 1) })
                     }
                   />
+                </div>
+                <div className="col-span-2">
+                  <Label>Columnas por hoja</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={6}
+                    value={design.columnsPerPage ?? 1}
+                    onChange={(e) =>
+                      setDesign({
+                        ...design,
+                        columnsPerPage: Math.max(1, Math.min(6, parseInt(e.target.value) || 1)),
+                      })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Para rollo DigitalPOS de 2 columnas usa <strong>2</strong>.
+                  </p>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -319,6 +337,7 @@ export function LabelEditor() {
                 rellenar desde la columna del CSV.
               </p>
             </TabsContent>
+
 
             <TabsContent value="design" className="px-4 space-y-4">
               <div className="flex gap-2">
