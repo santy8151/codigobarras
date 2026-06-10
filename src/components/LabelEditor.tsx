@@ -22,21 +22,21 @@ import {
 } from "@/lib/label-types";
 import { loadDesigns, saveDesigns } from "@/lib/label-store";
 
-// Default: 5cm x 3cm thermal label (DigitalPOS roll, 2 columns)
+// Default: 5cm x 3cm thermal label (DigitalPOS) — 1 etiqueta por hoja
 const DEFAULT_DESIGN = (): LabelDesign => ({
   id: newId(),
   name: "Mi Etiqueta",
   widthIn: cmToIn(5),
   heightIn: cmToIn(3),
-  columnsPerPage: 2,
+  columnsPerPage: 1,
   updatedAt: Date.now(),
   elements: [
     {
       id: newId(),
       type: "text",
-      x: 4,
-      y: 2,
-      width: 181,
+      x: 6,
+      y: 4,
+      width: 177,
       height: 14,
       value: "{PRODUCTO}",
       fontSize: 10,
@@ -47,9 +47,9 @@ const DEFAULT_DESIGN = (): LabelDesign => ({
       id: newId(),
       type: "barcode",
       x: 10,
-      y: 18,
-      width: 170,
-      height: 60,
+      y: 22,
+      width: 169,
+      height: 64,
       value: "{CODIGO}",
       barcodeFormat: "CODE128",
       displayValue: true,
@@ -57,10 +57,10 @@ const DEFAULT_DESIGN = (): LabelDesign => ({
     {
       id: newId(),
       type: "text",
-      x: 4,
-      y: 82,
-      width: 100,
-      height: 12,
+      x: 6,
+      y: 92,
+      width: 95,
+      height: 14,
       value: "MI EMPRESA",
       fontSize: 8,
       bold: true,
@@ -68,10 +68,10 @@ const DEFAULT_DESIGN = (): LabelDesign => ({
     {
       id: newId(),
       type: "text",
-      x: 105,
-      y: 80,
-      width: 80,
-      height: 14,
+      x: 100,
+      y: 90,
+      width: 83,
+      height: 16,
       value: "{PRECIO}",
       fontSize: 11,
       bold: true,
