@@ -15,48 +15,41 @@ import {
   inToPx,
   newId,
   interpolate,
+  cmToIn,
+  inToCm,
   type LabelDesign,
   type LabelElement,
 } from "@/lib/label-types";
 import { loadDesigns, saveDesigns } from "@/lib/label-store";
 
+// Default: 5cm x 3cm thermal label (DigitalPOS roll, 2 columns)
 const DEFAULT_DESIGN = (): LabelDesign => ({
   id: newId(),
   name: "Mi Etiqueta",
-  widthIn: 4,
-  heightIn: 2,
+  widthIn: cmToIn(5),
+  heightIn: cmToIn(3),
+  columnsPerPage: 2,
   updatedAt: Date.now(),
   elements: [
     {
       id: newId(),
       type: "text",
-      x: 16,
-      y: 12,
-      width: 260,
-      height: 36,
+      x: 4,
+      y: 2,
+      width: 181,
+      height: 14,
       value: "{PRODUCTO}",
-      fontSize: 14,
+      fontSize: 10,
       bold: false,
       align: "left",
     },
     {
       id: newId(),
-      type: "text",
-      x: 290,
-      y: 12,
-      width: 90,
-      height: 24,
-      value: "{FECHA}",
-      fontSize: 13,
-      align: "right",
-    },
-    {
-      id: newId(),
       type: "barcode",
-      x: 60,
-      y: 60,
-      width: 260,
-      height: 80,
+      x: 10,
+      y: 18,
+      width: 170,
+      height: 60,
       value: "{CODIGO}",
       barcodeFormat: "CODE128",
       displayValue: true,
@@ -64,28 +57,29 @@ const DEFAULT_DESIGN = (): LabelDesign => ({
     {
       id: newId(),
       type: "text",
-      x: 16,
-      y: 158,
-      width: 180,
-      height: 24,
-      value: "MI EMPRESA S.A.S",
-      fontSize: 13,
+      x: 4,
+      y: 82,
+      width: 100,
+      height: 12,
+      value: "MI EMPRESA",
+      fontSize: 8,
       bold: true,
     },
     {
       id: newId(),
       type: "text",
-      x: 240,
-      y: 158,
-      width: 140,
-      height: 24,
+      x: 105,
+      y: 80,
+      width: 80,
+      height: 14,
       value: "{PRECIO}",
-      fontSize: 16,
+      fontSize: 11,
       bold: true,
       align: "right",
     },
   ],
 });
+
 
 export function LabelEditor() {
   const [designs, setDesigns] = useState<LabelDesign[]>([]);
@@ -248,9 +242,10 @@ export function LabelEditor() {
         {/* Canvas */}
         <div className="flex-1 flex items-center justify-center p-6 lg:p-10">
           <div className="flex flex-col items-center gap-4">
-            <div className="text-xs text-muted-foreground">
-              {design.widthIn}" × {design.heightIn}" — Vista previa
+          <div className="text-xs text-muted-foreground">
+              {inToCm(design.widthIn).toFixed(1)} × {inToCm(design.heightIn).toFixed(1)} cm — Vista previa
             </div>
+
             <LabelCanvas
               design={design}
               row={previewRow}
@@ -297,26 +292,44 @@ export function LabelEditor() {
             <TabsContent value="label" className="px-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Ancho (in)</Label>
+                  <Label>Ancho (cm)</Label>
                   <Input
                     type="number"
                     step="0.1"
-                    value={design.widthIn}
+                    value={inToCm(design.widthIn).toFixed(2)}
                     onChange={(e) =>
-                      setDesign({ ...design, widthIn: parseFloat(e.target.value) || 1 })
+                      setDesign({ ...design, widthIn: cmToIn(parseFloat(e.target.value) || 1) })
                     }
                   />
                 </div>
                 <div>
-                  <Label>Alto (in)</Label>
+                  <Label>Alto (cm)</Label>
                   <Input
                     type="number"
                     step="0.1"
-                    value={design.heightIn}
+                    value={inToCm(design.heightIn).toFixed(2)}
                     onChange={(e) =>
-                      setDesign({ ...design, heightIn: parseFloat(e.target.value) || 1 })
+                      setDesign({ ...design, heightIn: cmToIn(parseFloat(e.target.value) || 1) })
                     }
                   />
+                </div>
+                <div className="col-span-2">
+                  <Label>Columnas por hoja</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={6}
+                    value={design.columnsPerPage ?? 1}
+                    onChange={(e) =>
+                      setDesign({
+                        ...design,
+                        columnsPerPage: Math.max(1, Math.min(6, parseInt(e.target.value) || 1)),
+                      })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Para rollo DigitalPOS de 2 columnas usa <strong>2</strong>.
+                  </p>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -324,6 +337,7 @@ export function LabelEditor() {
                 rellenar desde la columna del CSV.
               </p>
             </TabsContent>
+
 
             <TabsContent value="design" className="px-4 space-y-4">
               <div className="flex gap-2">
@@ -588,41 +602,71 @@ export function LabelEditor() {
       </div>
 
       {/* Print area */}
-      <div className="print-only">
-        {printRows.map((r, i) => (
-          <div
-            key={i}
-            className="print-label"
-            style={{
-              width: `${design.widthIn}in`,
-              height: `${design.heightIn}in`,
-            }}
-          >
+      <PrintArea design={design} printRows={printRows} />
+    </div>
+  );
+}
+
+function PrintArea({
+  design,
+  printRows,
+}: {
+  design: LabelDesign;
+  printRows: Record<string, string>[];
+}) {
+  const cols = Math.max(1, design.columnsPerPage ?? 1);
+  const pageWidthIn = design.widthIn * cols;
+  const pageHeightIn = design.heightIn;
+
+  // Group rows into pages of `cols`
+  const pages: Record<string, string>[][] = [];
+  for (let i = 0; i < printRows.length; i += cols) {
+    pages.push(printRows.slice(i, i + cols));
+  }
+
+  const pageCss = `@media print { @page { size: ${pageWidthIn}in ${pageHeightIn}in; margin: 0; } }`;
+
+  return (
+    <div className="print-only">
+      <style dangerouslySetInnerHTML={{ __html: pageCss }} />
+      {pages.map((page, i) => (
+        <div
+          key={i}
+          className="print-label"
+          style={{
+            width: `${pageWidthIn}in`,
+            height: `${pageHeightIn}in`,
+            display: "flex",
+            flexDirection: "row",
+          }}
+        >
+          {page.map((r, j) => (
             <div
+              key={j}
               style={{
-                width: inToPx(design.widthIn),
-                height: inToPx(design.heightIn),
+                width: `${design.widthIn}in`,
+                height: `${design.heightIn}in`,
+                overflow: "hidden",
                 position: "relative",
-                transformOrigin: "top left",
-                transform: `scale(${1 / 1})`,
               }}
             >
               <LabelCanvas design={design} row={r} scale={1} />
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
 
 function sampleRow(headers: string[]): Record<string, string> {
   const r: Record<string, string> = {
-    PRODUCTO: "AC ELECTRICO COMPACTO 9,500BTU",
-    CODIGO: "ER0003",
-    PRECIO: "$4.500.000",
-    FECHA: new Date().toLocaleDateString(),
+    PRODUCTO: "Resistencia Velocidades Chevrolet Dmax",
+    CODIGO: "RE6257480301",
+    PRECIO: "$160.000",
+    FECHA: "",
   };
   for (const h of headers) if (!(h in r)) r[h] = h;
   return r;
 }
+

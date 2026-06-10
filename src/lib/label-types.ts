@@ -21,9 +21,15 @@ export interface LabelDesign {
   name: string;
   widthIn: number;
   heightIn: number;
+  columnsPerPage?: number;
   elements: LabelElement[];
   updatedAt: number;
 }
+
+export const CM_PER_IN = 2.54;
+export const inToCm = (n: number) => n * CM_PER_IN;
+export const cmToIn = (n: number) => n / CM_PER_IN;
+
 
 export const DPI = 96; // screen px per inch for design canvas
 export const PRINT_DPI = 96; // print uses CSS inches, so this matches
