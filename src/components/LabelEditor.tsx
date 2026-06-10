@@ -602,41 +602,71 @@ export function LabelEditor() {
       </div>
 
       {/* Print area */}
-      <div className="print-only">
-        {printRows.map((r, i) => (
-          <div
-            key={i}
-            className="print-label"
-            style={{
-              width: `${design.widthIn}in`,
-              height: `${design.heightIn}in`,
-            }}
-          >
+      <PrintArea design={design} printRows={printRows} />
+    </div>
+  );
+}
+
+function PrintArea({
+  design,
+  printRows,
+}: {
+  design: LabelDesign;
+  printRows: Record<string, string>[];
+}) {
+  const cols = Math.max(1, design.columnsPerPage ?? 1);
+  const pageWidthIn = design.widthIn * cols;
+  const pageHeightIn = design.heightIn;
+
+  // Group rows into pages of `cols`
+  const pages: Record<string, string>[][] = [];
+  for (let i = 0; i < printRows.length; i += cols) {
+    pages.push(printRows.slice(i, i + cols));
+  }
+
+  const pageCss = `@media print { @page { size: ${pageWidthIn}in ${pageHeightIn}in; margin: 0; } }`;
+
+  return (
+    <div className="print-only">
+      <style dangerouslySetInnerHTML={{ __html: pageCss }} />
+      {pages.map((page, i) => (
+        <div
+          key={i}
+          className="print-label"
+          style={{
+            width: `${pageWidthIn}in`,
+            height: `${pageHeightIn}in`,
+            display: "flex",
+            flexDirection: "row",
+          }}
+        >
+          {page.map((r, j) => (
             <div
+              key={j}
               style={{
-                width: inToPx(design.widthIn),
-                height: inToPx(design.heightIn),
+                width: `${design.widthIn}in`,
+                height: `${design.heightIn}in`,
+                overflow: "hidden",
                 position: "relative",
-                transformOrigin: "top left",
-                transform: `scale(${1 / 1})`,
               }}
             >
               <LabelCanvas design={design} row={r} scale={1} />
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
 
 function sampleRow(headers: string[]): Record<string, string> {
   const r: Record<string, string> = {
-    PRODUCTO: "AC ELECTRICO COMPACTO 9,500BTU",
-    CODIGO: "ER0003",
-    PRECIO: "$4.500.000",
-    FECHA: new Date().toLocaleDateString(),
+    PRODUCTO: "Resistencia Velocidades Chevrolet Dmax",
+    CODIGO: "RE6257480301",
+    PRECIO: "$160.000",
+    FECHA: "",
   };
   for (const h of headers) if (!(h in r)) r[h] = h;
   return r;
 }
+
