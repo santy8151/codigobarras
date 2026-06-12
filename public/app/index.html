@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alisan Label Print - DigitalPOS 5x3 cm</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <img src="assets/logo.png" alt="Alisan PG" class="brand-logo" />
+          <div>
+            <p class="eyebrow">ALISAN PG S.A.S · Etiquetas térmicas</p>
+            <h1>Impresión de códigos de barras 5 × 3 cm</h1>
+            <p class="subtitle">Versión propia tipo Label LIVE, calibrada para rollo térmico adhesivo de 2 columnas en DigitalPOS.</p>
+            <p class="subtitle">
+              <a href="https://paginaofficial.lovable.app/tienda" target="_blank" rel="noopener" class="product-link">
+                🔎 Buscar producto en la tienda oficial
+              </a>
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <section class="layout">
+        <section class="panel wide">
+          <div class="panel-title">
+            <div>
+              <h2>Vista previa</h2>
+              <p>Diseño compacto como el sticker bueno: producto, fecha, barras, código, empresa y precio.</p>
+            </div>
+            <span id="totalToPrint" class="pill">0 etiquetas</span>
+          </div>
+
+          <div class="preview-wrap">
+            <div id="previewPage"></div>
+          </div>
+        </section>
+
+
+        <aside class="panel side">
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-tab="data">Datos</button>
+            <button class="tab" data-tab="design">Diseño</button>
+            <button class="tab" data-tab="settings">Impresión</button>
+            <button class="tab" data-tab="help">Guía</button>
+          </div>
+
+          <section class="tab-panel active" id="tab-data">
+            <h2>1. Cargar base de datos</h2>
+            <label class="file-drop">
+              <input id="csvFile" type="file" accept=".csv,text/csv" />
+              <span>Subir CSV</span>
+              <small>Campos sugeridos: PRODUCTO, CODIGO, FECHA, EMPRESA, PRECIO</small>
+            </label>
+
+            <label class="field">
+              <span>Pegar CSV manualmente</span>
+              <textarea id="csvText" rows="6" spellcheck="false" placeholder="PRODUCTO,CODIGO,FECHA,EMPRESA,PRECIO&#10;BLOWER RENAULT TWINGO 96-16,001003100024B05188,30/05/2026,ALISAN PG S.A.S,$320.000"></textarea>
+            </label>
+            <button id="btnParseText" class="secondary full">Cargar texto pegado</button>
+
+            <label class="field">
+              <span>Empresa por defecto</span>
+              <input id="defaultCompany" value="ALISAN PG S.A.S" />
+            </label>
+
+            <div class="field">
+              <span>Columnas que quiero editar a mano</span>
+              <div id="editableCols" class="chip-row">
+                <small>Carga datos para elegir columnas.</small>
+              </div>
+              <small>Marca solo las columnas que vas a corregir manualmente en la tabla.</small>
+            </div>
+
+            <div class="table-toolbar">
+              <button id="btnSelectAll" class="ghost">Todas</button>
+              <button id="btnSelectNone" class="ghost">Ninguna</button>
+            </div>
+            <div id="dataTable" class="data-table"></div>
+          </section>
+
+          <section class="tab-panel" id="tab-design">
+            <h2>2. Diseño del sticker</h2>
+            <p class="muted-help">Ajusta tamaños, fuentes y apariencia de cada campo de la etiqueta.</p>
+
+            <!-- ── Toolbar estilo Label LIVE ── -->
+            <div class="design-toolbar">
+              <div class="design-toolbar-row">
+                <button class="design-btn" onclick="document.getElementById('design-text-section').scrollIntoView({behavior:'smooth'})">
+                  <span class="design-btn-icon">T</span> Texto
+                </button>
+                <button class="design-btn" onclick="document.getElementById('design-barcode-section').scrollIntoView({behavior:'smooth'})">
+                  <span class="design-btn-icon design-btn-icon--barcode">▌▌</span> Código de barras
+                </button>
+                <button class="design-btn" onclick="document.getElementById('design-layout-section').scrollIntoView({behavior:'smooth'})">
+                  <span class="design-btn-icon">⊞</span> Diseño
+                </button>
+              </div>
+              <div class="design-toolbar-row">
+                <button class="design-btn design-btn--ghost" id="btnDesignUndo" onclick="designUndo()" title="Deshacer">↩ Deshacer</button>
+                <button class="design-btn design-btn--ghost" id="btnDesignRedo" onclick="designRedo()" title="Rehacer">↪ Rehacer</button>
+              </div>
+            </div>
+
+            <!-- ── OBJETOS (lista visual) ── -->
+            <div class="design-section-title">OBJETOS</div>
+            <div class="design-objects-list" id="designObjectsList">
+              <div class="design-obj-item" data-obj="producto">
+                <span class="design-obj-badge design-obj-badge--text">Texto</span>
+                <span class="design-obj-name">Producto <small class="design-obj-var">{PRODUCTO}</small></span>
+                <button class="design-obj-eye" title="Visible" onclick="toggleObjVisible('producto', this)">👁</button>
+              </div>
+              <div class="design-obj-item" data-obj="fecha">
+                <span class="design-obj-badge design-obj-badge--text">Texto</span>
+                <span class="design-obj-name">Fecha <small class="design-obj-var">{FECHA}</small></span>
+                <button class="design-obj-eye" title="Visible" onclick="toggleObjVisible('fecha', this)">👁</button>
+              </div>
+              <div class="design-obj-item design-obj-item--selected" data-obj="barcode">
+                <span class="design-obj-badge design-obj-badge--barcode">CÓDIGO</span>
+                <span class="design-obj-name">{CODIGO} — CODE128</span>
+                <button class="design-obj-eye" title="Visible" onclick="toggleObjVisible('barcode', this)">👁</button>
+              </div>
+              <div class="design-obj-item" data-obj="empresa">
+                <span class="design-obj-badge design-obj-badge--text">Texto</span>
+                <span class="design-obj-name">Empresa <small class="design-obj-var">{EMPRESA}</small></span>
+                <button class="design-obj-eye" title="Visible" onclick="toggleObjVisible('empresa', this)">👁</button>
+              </div>
+              <div class="design-obj-item" data-obj="precio">
+                <span class="design-obj-badge design-obj-badge--text">Texto</span>
+                <span class="design-obj-name">Precio <small class="design-obj-var">{PRECIO}</small></span>
+                <button class="design-obj-eye" title="Visible" onclick="toggleObjVisible('precio', this)">👁</button>
+              </div>
+            </div>
+
+            <!-- ── Agregar campo personalizado ── -->
+            <div class="design-add-field" style="display:flex;gap:6px;margin-top:8px;">
+              <input id="newObjName" type="text" placeholder="Nombre del nuevo campo" style="flex:1;" />
+              <button class="design-btn" type="button" onclick="addCustomObject()">+ Agregar</button>
+            </div>
+
+            <!-- ── Ajustes avanzados (ocultos por defecto) ── -->
+            <details class="advanced-settings-toggle">
+              <summary>⚙️ Ajustes Avanzados (Medidas y Fuentes)</summary>
+              <div class="advanced-settings-content">
+                <!-- ── Dimensiones del sticker ── -->
+                <div class="design-section-title" style="margin-top:18px;">DIMENSIONES DEL STICKER</div>
+                <div class="grid-2 compact">
+                  <label class="field">
+                    <span>Ancho sticker (mm)</span>
+                    <input id="labelWidthMmDesign" type="number" step="0.1" />
+                  </label>
+                  <label class="field">
+                    <span>Alto sticker (mm)</span>
+                    <input id="labelHeightMmDesign" type="number" step="0.1" />
+                  </label>
+                </div>
+                <small class="muted-help">Estos valores también se reflejan en la pestaña Impresión.</small>
+
+                <!-- ── Texto / Fuentes ── -->
+                <div class="design-section-title" id="design-text-section" style="margin-top:18px;">TAMAÑOS DE FUENTE</div>
+                <div class="grid-2 compact">
+                  <label class="field">
+                    <span>Producto (mm)</span>
+                    <input id="productFontMm" type="number" step="0.05" />
+                  </label>
+                  <label class="field">
+                    <span>Fecha (mm)</span>
+                    <input id="dateFontMm" type="number" step="0.05" />
+                  </label>
+                  <label class="field">
+                    <span>Código bajo barras (mm)</span>
+                    <input id="codeFontMm" type="number" step="0.05" />
+                  </label>
+                  <label class="field">
+                    <span>Empresa pie (mm)</span>
+                    <input id="footerFontMm" type="number" step="0.05" />
+                  </label>
+                  <label class="field">
+                    <span>Precio (mm)</span>
+                    <input id="priceFontMm" type="number" step="0.05" />
+                  </label>
+                </div>
+
+                <!-- ── Código de barras ── -->
+                <div class="design-section-title" id="design-barcode-section" style="margin-top:18px;">CÓDIGO DE BARRAS</div>
+                <label class="field">
+                  <span>Alto de barras (mm)</span>
+                  <input id="barcodeHeightMm" type="number" step="0.1" />
+                </label>
+
+                <!-- ── Diseño general ── -->
+                <div class="design-section-title" id="design-layout-section" style="margin-top:18px;">DISEÑO GENERAL</div>
+                <label class="field">
+                  <span>Padding interno (mm)</span>
+                  <input id="labelPaddingMm" type="number" step="0.1" />
+                </label>
+                <label class="field">
+                  <span>Rotación</span>
+                  <select id="rotate">
+                    <option value="0">0° — Normal</option>
+                    <option value="90">90° — Si sale atravesado</option>
+                  </select>
+                </label>
+
+                <label class="check-field" style="margin-top:10px;">
+                  <input id="debugOutlines" type="checkbox" />
+                  <span>Mostrar guías de corte en prueba</span>
+                </label>
+              </div>
+            </details>
+          </section>
+
+          <section class="tab-panel" id="tab-settings">
+            <h2>3. Impresión / DigitalPOS</h2>
+
+            <label class="field">
+              <span>Preset de impresora</span>
+              <select id="presetId"></select>
+              <small id="presetNote" class="help-text"></small>
+            </label>
+
+            <details class="advanced-settings-toggle">
+              <summary>⚙️ Ajustes Manuales de Papel (Solo para calibrar)</summary>
+              <div class="advanced-settings-content">
+                <div class="grid-2 compact">
+                  <label class="field">
+                    <span>Ancho papel/fila (mm)</span>
+                    <input id="pageWidthMm" type="number" step="0.1" />
+                  </label>
+                  <label class="field">
+                    <span>Alto papel/fila (mm)</span>
+                    <input id="pageHeightMm" type="number" step="0.1" />
+                  </label>
+                  <label class="field">
+                    <span>Ancho etiqueta (mm)</span>
+                    <input id="labelWidthMm" type="number" step="0.1" />
+                  </label>
+                  <label class="field">
+                    <span>Alto etiqueta (mm)</span>
+                    <input id="labelHeightMm" type="number" step="0.1" />
+                  </label>
+                  <label class="field">
+                    <span>Columnas</span>
+                    <input id="columns" type="number" min="1" max="2" />
+                  </label>
+                  <label class="field">
+                    <span>Separación central (mm)</span>
+                    <input id="columnGapMm" type="number" step="0.1" />
+                  </label>
+                  <label class="field">
+                    <span>Margen izquierdo (mm)</span>
+                    <input id="marginLeftMm" type="number" step="0.1" />
+                  </label>
+                  <label class="field">
+                    <span>Margen superior (mm)</span>
+                    <input id="marginTopMm" type="number" step="0.1" />
+                  </label>
+                  <label class="field">
+                    <span>Margen derecho (mm)</span>
+                    <input id="marginRightMm" type="number" step="0.1" />
+                  </label>
+                  <label class="field">
+                    <span>Margen inferior (mm)</span>
+                    <input id="marginBottomMm" type="number" step="0.1" />
+                  </label>
+                </div>
+              </div>
+            </details>
+
+            <label class="field">
+              <span>Imprimir solo en una columna (otra en blanco)</span>
+              <select id="blankColumn">
+                <option value="none">No, imprimir las 2 columnas</option>
+                <option value="left">Solo derecha (izquierda en blanco)</option>
+                <option value="right">Solo izquierda (derecha en blanco)</option>
+              </select>
+              <small>Útil cuando quieres aprovechar una sola columna del rollo sin gastar el otro sticker.</small>
+            </label>
+
+            <div class="grid-2 compact">
+              <label class="field">
+                <span>Copias por producto</span>
+                <input id="copies" type="number" min="1" value="1" />
+              </label>
+              <label class="field">
+                <span>Saltar stickers usados</span>
+                <select id="skipLabels">
+                  <option value="0">0 - empezar en la primera</option>
+                  <option value="1">1 - saltar el primero</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="notice warn">
+              ⚠️ <strong>IMPORTANTE — impresora COD BARRAS:</strong> Al imprimir, Chrome detectará automáticamente que el papel es más ancho que alto (102×30 mm) y puede rotar la etiqueta 90°. Para evitar eso, en el diálogo de Chrome:<br>
+              1. Selecciona la impresora <strong>COD BARRAS</strong>.<br>
+              2. Haz clic en <strong>Más configuraciones</strong> y pon Diseño en <strong>Horizontal (Landscape)</strong>.<br>
+              3. Tamaño de papel: crea o selecciona <strong>102 × 30 mm</strong> (si no aparece, ve a Preferencias de impresión desde el Panel de Control).<br>
+              4. Márgenes: <strong>Ninguno</strong>. Escala: <strong>100%</strong>. Encabezados/pies: <strong>Desactivados</strong>.
+            </div>
+
+            <div class="print-actions">
+              <button id="btnLoadExample" class="secondary">Cargar ejemplo</button>
+              <button id="btnPrintOneTest" class="ghost">Prueba 1 sticker</button>
+              <button id="btnPrintTop" class="primary">Imprimir selección</button>
+            </div>
+
+            <button id="btnResetSettings" class="secondary full">Restaurar DigitalPOS 5×3 cm / 2 columnas</button>
+            <button id="btnSaveSettings" class="primary full">Guardar configuración</button>
+          </section>
+
+          <section class="tab-panel" id="tab-help">
+            <h2>4. Checklist exacto — impresora COD BARRAS</h2>
+            <div class="notice warn" style="margin-bottom:12px;">
+              ⚠️ Tu impresora se llama <strong>COD BARRAS</strong> (driver: 4BARCODE 4B-2054TF). El rollo tiene 2 columnas de 50×30 mm. Si la etiqueta sale vertical o usa más de 1 fila, sigue este checklist al pie de la letra.
+            </div>
+            <ol class="steps">
+              <li>En la pestaña <strong>Impresión</strong>, usa el preset <strong>DigitalPOS borde completo 102×30 mm / 2 stickers</strong>.</li>
+              <li>Presiona <strong>Prueba 1 sticker</strong> primero para no gastar el rollo.</li>
+              <li>En el diálogo de Chrome, selecciona la impresora <strong>COD BARRAS</strong>.</li>
+              <li>Haz clic en <strong>Más configuraciones</strong>:<br>
+                — Diseño: <strong>Horizontal (Landscape)</strong><br>
+                — Tamaño de papel: <strong>102 × 30 mm</strong> (créalo como personalizado si no existe)<br>
+                — Escala: <strong>100%</strong><br>
+                — Márgenes: <strong>Ninguno</strong><br>
+                — Encabezados y pies: <strong>Desactivados</strong>
+              </li>
+              <li>Si el tamaño 102×30 mm no aparece en Chrome, créalo en Windows:<br>
+                Panel de Control → Dispositivos e Impresoras → clic derecho en <strong>COD BARRAS</strong> → <em>Preferencias de impresión</em> → pestaña <em>Avanzado</em> → <em>Tamaño de papel</em> → Nuevo. Ancho: 102 mm / Alto: 30 mm.
+              </li>
+              <li>Si la etiqueta sigue corrida: ajusta el margen izquierdo (±0.5 mm) o el margen superior (±0.5 mm) desde la pestaña Impresión y vuelve a probar.</li>
+            </ol>
+            <div id="printSizeBox" class="print-size-box"></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <div id="printRoot" aria-hidden="true"></div>
+    <style id="printStyle"></style>
+
+    <script src="src/domain/presets/PrinterPresets.js"></script>
+    <script src="src/domain/entities/LabelSettings.js"></script>
+    <script src="src/domain/entities/LabelData.js"></script>
+    <script src="src/domain/services/Code128Barcode.js"></script>
+    <script src="src/infrastructure/csv/CsvParser.js"></script>
+    <script src="src/infrastructure/storage/LocalStorageRepository.js"></script>
+    <script src="src/infrastructure/printing/PrintService.js"></script>
+    <script src="src/application/use-cases/ParseCsvUseCase.js"></script>
+    <script src="src/application/use-cases/BuildPrintRowsUseCase.js"></script>
+    <script src="src/application/use-cases/BuildPrintPagesUseCase.js"></script>
+    <script src="src/presentation/components/LabelRenderer.js"></script>
+    <script src="src/presentation/components/DataTable.js"></script>
+    <script src="src/presentation/AppController.js"></script>
+
+    <script>
+      /* ── Panel Diseño: Deshacer / Rehacer / Ocultar objetos ── */
+      const _designHistory = [];
+      let _designFuture = [];
+
+      function _captureDesignSnapshot() {
+        const inputs = ['labelPaddingMm','barcodeHeightMm','productFontMm','dateFontMm','codeFontMm','footerFontMm','priceFontMm','rotate'];
+        const snap = {};
+        inputs.forEach(id => { const el = document.getElementById(id); if (el) snap[id] = el.value; });
+        snap.debugOutlines = document.getElementById('debugOutlines')?.checked;
+        snap.hiddenObjs = Array.from(document.querySelectorAll('.design-obj-item--hidden')).map(el => el.dataset.obj);
+        return snap;
+      }
+
+      function _applyDesignSnapshot(snap) {
+        Object.keys(snap).forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (id === 'debugOutlines') el.checked = snap[id];
+          else if (id === 'hiddenObjs') {} // handled below
+          else { el.value = snap[id]; el.dispatchEvent(new Event('input')); }
+        });
+        // restore hidden
+        document.querySelectorAll('.design-obj-item').forEach(item => {
+          item.classList.toggle('design-obj-item--hidden', (snap.hiddenObjs || []).includes(item.dataset.obj));
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // Capture snapshot before each design input change for undo
+        const inputs = ['labelPaddingMm','barcodeHeightMm','productFontMm','dateFontMm','codeFontMm','footerFontMm','priceFontMm','rotate','debugOutlines'];
+        inputs.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.addEventListener('focus', () => { _designHistory.push(_captureDesignSnapshot()); _designFuture = []; });
+        });
+      });
+
+      function designUndo() {
+        if (_designHistory.length === 0) return;
+        _designFuture.push(_captureDesignSnapshot());
+        _applyDesignSnapshot(_designHistory.pop());
+      }
+
+      function designRedo() {
+        if (_designFuture.length === 0) return;
+        _designHistory.push(_captureDesignSnapshot());
+        _applyDesignSnapshot(_designFuture.pop());
+      }
+
+      function toggleObjVisible(objKey, btn) {
+        const item = document.querySelector(`.design-obj-item[data-obj="${objKey}"]`);
+        if (!item) return;
+        _designHistory.push(_captureDesignSnapshot()); _designFuture = [];
+        item.classList.toggle('design-obj-item--hidden');
+        btn.title = item.classList.contains('design-obj-item--hidden') ? 'Oculto' : 'Visible';
+        btn.style.opacity = item.classList.contains('design-obj-item--hidden') ? '1' : '';
+      }
+
+      // Click on object row selects it visually
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.design-obj-item').forEach(item => {
+          item.addEventListener('click', (e) => {
+            if (e.target.classList.contains('design-obj-eye')) return;
+            document.querySelectorAll('.design-obj-item').forEach(i => i.classList.remove('design-obj-item--selected'));
+            item.classList.add('design-obj-item--selected');
+          });
+        });
+      });
+      // Sync sticker-dimension inputs in Design tab with originals in Settings tab
+      function _syncMirror(srcId, mirrorId) {
+        const src = document.getElementById(srcId);
+        const mirror = document.getElementById(mirrorId);
+        if (!src || !mirror) return;
+        const push = () => { mirror.value = src.value; };
+        push();
+        src.addEventListener('input', push);
+        src.addEventListener('change', push);
+        mirror.addEventListener('input', () => {
+          src.value = mirror.value;
+          src.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      }
+      document.addEventListener('DOMContentLoaded', () => {
+        _syncMirror('labelWidthMm', 'labelWidthMmDesign');
+        _syncMirror('labelHeightMm', 'labelHeightMmDesign');
+      });
+
+      // Add a new custom object item to OBJETOS list (visual)
+      function addCustomObject() {
+        const input = document.getElementById('newObjName');
+        const name = (input.value || '').trim();
+        if (!name) return;
+        const key = 'custom_' + Date.now();
+        const list = document.getElementById('designObjectsList');
+        const item = document.createElement('div');
+        item.className = 'design-obj-item';
+        item.dataset.obj = key;
+        item.innerHTML = `
+          <span class="design-obj-badge design-obj-badge--text">Texto</span>
+          <span class="design-obj-name">${name.replace(/[<>&"]/g,'')} <small class="design-obj-var">{${name.toUpperCase().replace(/[^A-Z0-9_]/g,'_')}}</small></span>
+          <button class="design-obj-eye" title="Visible">👁</button>
+          <button class="design-obj-eye" title="Eliminar" style="color:#c00">✕</button>
+        `;
+        item.querySelectorAll('button')[0].addEventListener('click', (e) => { e.stopPropagation(); toggleObjVisible(key, e.currentTarget); });
+        item.querySelectorAll('button')[1].addEventListener('click', (e) => { e.stopPropagation(); item.remove(); });
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.design-obj-item').forEach(i => i.classList.remove('design-obj-item--selected'));
+          item.classList.add('design-obj-item--selected');
+        });
+        list.appendChild(item);
+        input.value = '';
+      }
+    </script>
+
+    <style>
+      /* Drag handles for label fields in the preview */
+      #previewPage .lbl-field {
+        cursor: grab;
+        outline: 0.18mm dashed transparent;
+        transition: outline-color .12s;
+      }
+      #previewPage .lbl-field:hover {
+        outline-color: rgba(17, 24, 39, .55);
+      }
+      #previewPage .lbl-field.dragging {
+        cursor: grabbing;
+        outline: 0.22mm solid #2563eb;
+        background: rgba(37, 99, 235, .08);
+      }
+    </style>
+
+    <script>
+      // ─── Drag & drop de elementos en la vista previa ───
+      // Convierte deltas de pixel a mm tomando en cuenta el transform: scale del preview.
+      (function setupDrag() {
+        const MM_PER_PX = 0.2645833333; // 1 px = 1/96 in = 0.2645833 mm at standard CSS DPI
+        const previewWrap = document.getElementById('previewPage');
+        if (!previewWrap) { setTimeout(setupDrag, 200); return; }
+
+        // Override toggleObjVisible to actually hide the field
+        window.toggleObjVisible = function(objKey, btn) {
+          const item = document.querySelector('.design-obj-item[data-obj="' + objKey + '"]');
+          if (!item) return;
+          window.AlisanHidden = window.AlisanHidden || {};
+          window.AlisanHidden[objKey] = !window.AlisanHidden[objKey];
+          item.classList.toggle('design-obj-item--hidden', !!window.AlisanHidden[objKey]);
+          btn.title = window.AlisanHidden[objKey] ? 'Oculto' : 'Visible';
+          btn.textContent = window.AlisanHidden[objKey] ? '🚫' : '👁';
+          window.AlisanSaveHidden && window.AlisanSaveHidden();
+          // trigger re-render
+          const trig = document.getElementById('labelPaddingMm');
+          if (trig) trig.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
+        // Reset positions button
+        window.resetSticker = function() {
+          window.AlisanPositions = {};
+          window.AlisanSavePositions && window.AlisanSavePositions();
+          const trig = document.getElementById('labelPaddingMm');
+          if (trig) trig.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
+        function getScale() {
+          // Read scale from the first .preview-page inside the wrap (inline style set by AppController)
+          const firstPage = document.querySelector('#previewPage .preview-page');
+          if (firstPage && firstPage.style.transform) {
+            const m = firstPage.style.transform.match(/scale\(([^)]+)\)/);
+            if (m) return parseFloat(m[1]) || 1;
+          }
+          return 3.25; // fallback
+        }
+
+        let drag = null;
+
+        previewWrap.addEventListener('mousedown', (e) => {
+          const target = e.target.closest('.lbl-field');
+          if (!target) return;
+          // Only first label of preview
+          const label = target.closest('.label');
+          if (!label || label.parentElement.firstElementChild !== label) {
+            // allow drag on any label but we'll mirror to all
+          }
+          const key = target.dataset.field;
+          if (!key) return;
+          e.preventDefault();
+          const scale = getScale();
+          drag = {
+            key,
+            target,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY,
+            startLeftMm: parseFloat(target.style.left) || 0,
+            startTopMm: parseFloat(target.style.top) || 0,
+            scale,
+          };
+          target.classList.add('dragging');
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!drag) return;
+          const dxPx = (e.clientX - drag.startMouseX) / drag.scale;
+          const dyPx = (e.clientY - drag.startMouseY) / drag.scale;
+          const newLeft = drag.startLeftMm + dxPx * MM_PER_PX;
+          const newTop = drag.startTopMm + dyPx * MM_PER_PX;
+          // Update all matching fields (both stickers in preview)
+          previewWrap.querySelectorAll('.lbl-field[data-field="' + drag.key + '"]').forEach((el) => {
+            el.style.left = newLeft + 'mm';
+            el.style.top = newTop + 'mm';
+          });
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (!drag) return;
+          const el = drag.target;
+          const x = parseFloat(el.style.left);
+          const y = parseFloat(el.style.top);
+          window.AlisanPositions = window.AlisanPositions || {};
+          // map UI key (producto/fecha/barcode/empresa/precio) → renderer key (product/date/barcode/company/price)
+          const renderKey = drag.key === 'producto' ? 'product'
+            : drag.key === 'fecha' ? 'date'
+            : drag.key === 'empresa' ? 'company'
+            : drag.key === 'precio' ? 'price'
+            : drag.key === 'code' ? 'code'
+            : drag.key === 'barcode' ? 'barcode'
+            : drag.key;
+          window.AlisanPositions[renderKey] = Object.assign({}, window.AlisanPositions[renderKey] || {}, { x, y });
+          window.AlisanSavePositions && window.AlisanSavePositions();
+          drag.target.classList.remove('dragging');
+          drag = null;
+          // Re-render so print area also updates
+          const trig = document.getElementById('labelPaddingMm');
+          if (trig) trig.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      })();
+
+      // Add a "Reset posiciones" button into the design toolbar after load
+      document.addEventListener('DOMContentLoaded', () => {
+        const row = document.querySelector('.design-toolbar .design-toolbar-row + .design-toolbar-row');
+        if (row && !document.getElementById('btnResetSticker')) {
+          const btn = document.createElement('button');
+          btn.className = 'design-btn design-btn--ghost';
+          btn.id = 'btnResetSticker';
+          btn.type = 'button';
+          btn.textContent = '↺ Restablecer posiciones';
+          btn.onclick = () => window.resetSticker && window.resetSticker();
+          row.appendChild(btn);
+        }
+      });
+    </script>
+  </body>
+</html>
+
