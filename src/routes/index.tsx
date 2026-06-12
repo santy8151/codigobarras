@@ -1,19 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LabelEditor } from "@/components/LabelEditor";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Editor de Etiquetas — Diseña e imprime códigos de barras" },
+      { title: "Alisan Label Print — DigitalPOS 5×3 cm" },
       {
         name: "description",
         content:
-          "Diseña etiquetas con códigos de barras, importa datos desde CSV e imprime múltiples etiquetas en lote.",
-      },
-      { property: "og:title", content: "Editor de Etiquetas" },
-      {
-        property: "og:description",
-        content: "Diseña, edita e imprime etiquetas con códigos de barras.",
+          "Imprime etiquetas térmicas adhesivas con código de barras CODE128 para impresora DigitalPOS.",
       },
     ],
   }),
@@ -21,5 +16,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  return <LabelEditor />;
+  useEffect(() => {
+    window.location.replace("/app/index.html");
+  }, []);
+  return (
+    <div style={{ padding: 24, fontFamily: "system-ui" }}>
+      Cargando aplicación… Si no carga,{" "}
+      <a href="/app/index.html">haz clic aquí</a>.
+    </div>
+  );
 }
