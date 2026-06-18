@@ -14,7 +14,7 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
   function initialSettings() {
     const saved = storage.loadSettings();
     if (saved && saved.pageWidthMm) return settingsEntity.sanitizeSettings(saved);
-    return settingsEntity.sanitizeSettings(presets.settingsFor('digitalpos_5x3_2col'));
+    return settingsEntity.sanitizeSettings(presets.settingsFor('rollo_105x25_2col'));
   }
 
   const state = {
@@ -27,6 +27,8 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
     skipLabels: 0,
     defaultCompany: 'ALISAN PG S.A.S',
     editableColumns: new Set(),
+    searchQuery: '',
+    visibleIndexes: [],
   };
 
   const els = {};
@@ -35,13 +37,15 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
 
   function bindElements() {
     [
-      'previewPage', 'printRoot', 'printStyle', 'csvFile', 'csvText', 'btnParseText', 'defaultCompany',
+      'previewPage', 'printRoot', 'printStyle', 'csvFile', 'defaultCompany',
       'copies', 'skipLabels', 'dataTable', 'btnSelectAll', 'btnSelectNone', 'btnLoadExample',
       'btnPrintTop', 'btnPrintOneTest', 'btnResetSettings', 'btnSaveSettings', 'totalToPrint', 'printSizeBox',
       'presetId', 'presetNote', 'pageWidthMm', 'pageHeightMm', 'labelWidthMm', 'labelHeightMm', 'columns',
       'columnGapMm', 'marginLeftMm', 'marginTopMm', 'marginRightMm', 'marginBottomMm', 'labelPaddingMm',
       'barcodeHeightMm', 'productFontMm', 'dateFontMm', 'codeFontMm', 'footerFontMm', 'priceFontMm',
-      'rotate', 'debugOutlines', 'blankColumn', 'editableCols'
+      'rotate', 'debugOutlines', 'blankColumn', 'editableCols',
+      'searchBox', 'manualProducto', 'manualCodigo', 'manualFecha', 'manualEmpresa', 'manualPrecio',
+      'btnManualAdd', 'btnManualClear', 'csvPreview'
     ].forEach((id) => { els[id] = $(id); });
   }
 
@@ -67,12 +71,48 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
       event.target.value = '';
     });
 
-    els.btnParseText.addEventListener('click', () => loadCsv(els.csvText.value));
     els.btnLoadExample.addEventListener('click', () => {
-      els.csvText.value = sampleCsv;
       loadCsv(sampleCsv);
       toast('Ejemplo cargado. Imprime una prueba antes de tirar todo el rollo.');
     });
+
+    if (els.searchBox) {
+      els.searchBox.addEventListener('input', () => {
+        state.searchQuery = els.searchBox.value || '';
+        renderDataTable();
+        renderTotal();
+      });
+    }
+
+    if (els.btnManualAdd) {
+      els.btnManualAdd.addEventListener('click', () => {
+        const producto = (els.manualProducto.value || '').trim();
+        const codigo = (els.manualCodigo.value || '').trim();
+        if (!producto && !codigo) { toast('Escribe al menos producto o código.'); return; }
+        const newRow = {
+          PRODUCTO: producto || 'PRODUCTO',
+          CODIGO: codigo || '000000000000',
+          FECHA: (els.manualFecha.value || '').trim(),
+          EMPRESA: (els.manualEmpresa.value || '').trim() || state.defaultCompany,
+          PRECIO: (els.manualPrecio.value || '').trim(),
+        };
+        if (!state.headers.length) state.headers = ['PRODUCTO','CODIGO','FECHA','EMPRESA','PRECIO'];
+        state.rows.push(newRow);
+        state.selectedIndexes.add(state.rows.length - 1);
+        ['manualProducto','manualCodigo','manualFecha','manualPrecio'].forEach((id)=>{ if(els[id]) els[id].value=''; });
+        if (els.manualProducto) els.manualProducto.focus();
+        render();
+        toast('Etiqueta agregada a la lista.');
+      });
+    }
+
+    if (els.btnManualClear) {
+      els.btnManualClear.addEventListener('click', () => {
+        if (!confirm('¿Borrar todas las etiquetas de la lista?')) return;
+        state.rows = []; state.selectedIndexes = new Set(); state.previewIndex = 0;
+        render();
+      });
+    }
 
     els.btnSelectAll.addEventListener('click', () => {
       state.selectedIndexes = new Set(state.rows.map((_, index) => index));
@@ -131,9 +171,9 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
     });
 
     els.btnResetSettings.addEventListener('click', () => {
-      state.settings = settingsEntity.sanitizeSettings(presets.settingsFor('digitalpos_5x3_2col'));
+      state.settings = settingsEntity.sanitizeSettings(presets.settingsFor('rollo_105x25_2col'));
       render();
-      toast('Restaurado al preset DigitalPOS 5×3 cm / 2 columnas.');
+      toast('Restaurado al preset Rollo 105×25 mm / 2 columnas.');
     });
 
     els.btnSaveSettings.addEventListener('click', () => {
@@ -240,38 +280,71 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
     });
   }
 
+  function matchesSearch(row) {
+    const q = (state.searchQuery || '').trim().toLowerCase();
+    if (!q) return true;
+    return Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q));
+  }
+
   function renderDataTable() {
+    const filteredRows = [];
+    const indexMap = [];
+    state.rows.forEach((row, origIdx) => {
+      if (matchesSearch(row)) { filteredRows.push(row); indexMap.push(origIdx); }
+    });
+    const filteredSelected = new Set();
+    indexMap.forEach((orig, i) => { if (state.selectedIndexes.has(orig)) filteredSelected.add(i); });
+    state.visibleIndexes = indexMap.slice();
+
     dataTable.render(
       els.dataTable,
       state.headers,
-      state.rows,
-      state.selectedIndexes,
-      (index) => {
-        if (state.selectedIndexes.has(index)) state.selectedIndexes.delete(index);
-        else state.selectedIndexes.add(index);
+      filteredRows,
+      filteredSelected,
+      (i) => {
+        const orig = indexMap[i];
+        if (state.selectedIndexes.has(orig)) state.selectedIndexes.delete(orig);
+        else state.selectedIndexes.add(orig);
         render();
       },
-      (index) => {
-        state.previewIndex = index;
+      (i) => {
+        state.previewIndex = indexMap[i];
         renderPreview();
         highlightPreviewRow();
       },
       {
         editableColumns: state.editableColumns,
-        onEdit: (index, col, value) => {
-          if (!state.rows[index]) return;
-          state.rows[index] = Object.assign({}, state.rows[index], { [col]: value });
+        onEdit: (i, col, value) => {
+          const orig = indexMap[i];
+          if (orig == null || !state.rows[orig]) return;
+          state.rows[orig] = Object.assign({}, state.rows[orig], { [col]: value });
           renderPreview();
           renderPrintArea(false);
+          renderCsvPreview();
         },
       }
     );
     highlightPreviewRow();
   }
 
+  function csvEscape(v) {
+    const s = String(v ?? '');
+    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function renderCsvPreview() {
+    if (!els.csvPreview) return;
+    const headers = state.headers.length ? state.headers : ['PRODUCTO','CODIGO','FECHA','EMPRESA','PRECIO'];
+    const lines = [headers.join(',')];
+    state.rows.forEach((r) => lines.push(headers.map((h) => csvEscape(r[h])).join(',')));
+    els.csvPreview.value = lines.join('\n');
+  }
+
   function highlightPreviewRow() {
     els.dataTable.querySelectorAll('tbody tr').forEach((tr) => {
-      tr.classList.toggle('previewing', Number(tr.dataset.index) === state.previewIndex);
+      const idxInFilter = Number(tr.dataset.index);
+      const orig = state.visibleIndexes[idxInFilter];
+      tr.classList.toggle('previewing', orig === state.previewIndex);
     });
   }
 
@@ -373,7 +446,14 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
     renderPrintArea(false);
     renderTotal();
     renderDataTable();
+    renderCsvPreview();
+    if (global.AlisanInventory && typeof global.AlisanInventory.syncFromRows === 'function') {
+      global.AlisanInventory.syncFromRows(state.rows);
+    }
   }
+
+  global.AlisanGetRows = function() { return state.rows.slice(); };
+  global.AlisanGetHeaders = function() { return state.headers.slice(); };
 
   function printCurrent(onlyOneTest) {
     if (!state.rows.length) {
@@ -400,7 +480,6 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
     bindElements();
     hydrateFromStorage();
     wireEvents();
-    els.csvText.value = sampleCsv;
     loadCsv(sampleCsv);
   }
 

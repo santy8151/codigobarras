@@ -340,3 +340,72 @@ textarea { resize: vertical; min-height: 120px; font-family: ui-monospace, SFMon
   .panel-title { flex-direction: column; gap: 8px; }
   .pill { align-self: flex-start; }
 }
+
+/* ── Topbar action ── */
+.topbar { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
+.topbar-actions { display:flex; gap:8px; }
+
+/* ── Big CTA (Inventario) ── */
+.big-cta { font-size: 18px !important; padding: 16px 22px !important; width: 100%; }
+.inv-actions-top { display:flex; flex-direction:column; gap:10px; margin-bottom:8px; }
+
+/* ── Inventory modal ── */
+.inv-modal {
+  position: fixed; inset: 0; background: rgba(15,23,42,.78);
+  display: none; align-items: flex-start; justify-content: center;
+  z-index: 9999; padding: 16px; overflow-y: auto;
+}
+.inv-modal.open { display: flex; }
+.inv-modal-card {
+  background: #fff; border-radius: 14px; width: 100%; max-width: 480px;
+  padding: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.inv-modal-card--wide { max-width: 760px; }
+.inv-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.inv-modal-head h3 { margin:0; font-size: 18px; }
+
+.inv-video-wrap {
+  position: relative; width: 100%; aspect-ratio: 4/3;
+  background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 8px;
+}
+.inv-video-wrap video { width:100%; height:100%; object-fit: cover; }
+.inv-scan-overlay {
+  position: absolute; left: 10%; right: 10%; top: 40%; bottom: 40%;
+  border: 2px solid #22c55e; border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,.25);
+  pointer-events: none;
+}
+
+/* ── Scan feedback card ── */
+.inv-card {
+  border-radius: 10px; padding: 12px; margin-top: 10px;
+  border: 2px solid; text-align: center;
+}
+.inv-status-ok { background: #ecfdf5; border-color: #22c55e; color:#065f46; }
+.inv-status-warn { background: #fef3c7; border-color: #f59e0b; color:#92400e; }
+.inv-status-bad { background: #fee2e2; border-color: #ef4444; color:#991b1b; }
+.inv-card-title { font-weight: 700; font-size: 15px; }
+.inv-card-code { font-family: monospace; font-size: 13px; margin: 4px 0; }
+.inv-card-status { font-weight: 700; font-size: 16px; margin: 6px 0; }
+.inv-card-actions {
+  display:flex; align-items:center; justify-content:center; gap:12px; margin-top:8px;
+}
+.inv-card-counted { font-size: 22px; font-weight: 800; min-width: 40px; }
+.inv-btn-plus, .inv-btn-minus {
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  font-size: 22px; font-weight: 800; cursor: pointer; color: #fff;
+}
+.inv-btn-plus { background: #22c55e; }
+.inv-btn-minus { background: #ef4444; }
+
+/* ── Inventory table rows ── */
+.inv-row-ok td { background: #ecfdf5; }
+.inv-row-warn td { background: #fef3c7; }
+.inv-row-bad td { background: #fee2e2; }
+
+@media (max-width: 480px) {
+  .inv-modal { padding: 6px; }
+  .inv-modal-card { padding: 10px; border-radius: 10px; }
+  .topbar-actions { width: 100%; }
+  .topbar-actions button { width: 100%; }
+}

@@ -4,10 +4,39 @@
   global.Alisan.domain.presets = global.Alisan.domain.presets || {};
 
   const PRESETS = Object.freeze({
+    rollo_105x25_2col: Object.freeze({
+      id: 'rollo_105x25_2col',
+      name: 'Rollo térmico 105 × 25 mm / 2 stickers de 47 × 25 mm',
+      note: 'Preset principal calibrado: rollo 105 × 25 mm, 2 stickers de 47 × 25 mm, separación central 3 mm, márgenes laterales 4 mm.',
+      settings: Object.freeze({
+        pageWidthMm: 105,
+        pageHeightMm: 25,
+        labelWidthMm: 47,
+        labelHeightMm: 25,
+        columns: 2,
+        columnGapMm: 3,
+        rowGapMm: 0,
+        marginLeftMm: 4,
+        marginTopMm: 0,
+        marginRightMm: 4,
+        marginBottomMm: 0,
+        labelPaddingMm: 2.5,
+        barcodeHeightMm: 7,
+        productFontMm: 1.65,
+        dateFontMm: 1.55,
+        codeFontMm: 1.6,
+        footerFontMm: 1.75,
+        priceFontMm: 1.85,
+        dpi: 300,
+        scaling: 100,
+        rotate: 0,
+        debugOutlines: 0,
+      }),
+    }),
     digitalpos_5x3_2col: Object.freeze({
       id: 'digitalpos_5x3_2col',
       name: 'DigitalPOS borde completo 102 x 30 mm / 2 stickers',
-      note: 'Preset principal para imprimir pegado al borde del papel: hoja 102 x 30 mm, 2 stickers de 50 x 30 mm, separación central 2 mm, márgenes en cero y escala 100%.',
+      note: 'Preset alternativo: hoja 102 x 30 mm, 2 stickers de 50 x 30 mm, separación central 2 mm.',
       settings: Object.freeze({
         pageWidthMm: 102,
         pageHeightMm: 30,
@@ -94,8 +123,9 @@
   });
 
   function getPreset(id) {
-    return PRESETS[id] || PRESETS.digitalpos_5x3_2col;
+    return PRESETS[id] || PRESETS.rollo_105x25_2col;
   }
+
 
   function list() {
     return Object.values(PRESETS);
