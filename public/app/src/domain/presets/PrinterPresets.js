@@ -123,8 +123,9 @@
   });
 
   function getPreset(id) {
-    return PRESETS[id] || PRESETS.digitalpos_5x3_2col;
+    return PRESETS[id] || PRESETS.rollo_105x25_2col;
   }
+
 
   function list() {
     return Object.values(PRESETS);
