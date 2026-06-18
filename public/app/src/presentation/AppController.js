@@ -171,9 +171,9 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
     });
 
     els.btnResetSettings.addEventListener('click', () => {
-      state.settings = settingsEntity.sanitizeSettings(presets.settingsFor('digitalpos_5x3_2col'));
+      state.settings = settingsEntity.sanitizeSettings(presets.settingsFor('rollo_105x25_2col'));
       render();
-      toast('Restaurado al preset DigitalPOS 5×3 cm / 2 columnas.');
+      toast('Restaurado al preset Rollo 105×25 mm / 2 columnas.');
     });
 
     els.btnSaveSettings.addEventListener('click', () => {
