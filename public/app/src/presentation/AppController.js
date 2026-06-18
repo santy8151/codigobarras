@@ -280,38 +280,71 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
     });
   }
 
+  function matchesSearch(row) {
+    const q = (state.searchQuery || '').trim().toLowerCase();
+    if (!q) return true;
+    return Object.values(row).some((v) => String(v ?? '').toLowerCase().includes(q));
+  }
+
   function renderDataTable() {
+    const filteredRows = [];
+    const indexMap = [];
+    state.rows.forEach((row, origIdx) => {
+      if (matchesSearch(row)) { filteredRows.push(row); indexMap.push(origIdx); }
+    });
+    const filteredSelected = new Set();
+    indexMap.forEach((orig, i) => { if (state.selectedIndexes.has(orig)) filteredSelected.add(i); });
+    state.visibleIndexes = indexMap.slice();
+
     dataTable.render(
       els.dataTable,
       state.headers,
-      state.rows,
-      state.selectedIndexes,
-      (index) => {
-        if (state.selectedIndexes.has(index)) state.selectedIndexes.delete(index);
-        else state.selectedIndexes.add(index);
+      filteredRows,
+      filteredSelected,
+      (i) => {
+        const orig = indexMap[i];
+        if (state.selectedIndexes.has(orig)) state.selectedIndexes.delete(orig);
+        else state.selectedIndexes.add(orig);
         render();
       },
-      (index) => {
-        state.previewIndex = index;
+      (i) => {
+        state.previewIndex = indexMap[i];
         renderPreview();
         highlightPreviewRow();
       },
       {
         editableColumns: state.editableColumns,
-        onEdit: (index, col, value) => {
-          if (!state.rows[index]) return;
-          state.rows[index] = Object.assign({}, state.rows[index], { [col]: value });
+        onEdit: (i, col, value) => {
+          const orig = indexMap[i];
+          if (orig == null || !state.rows[orig]) return;
+          state.rows[orig] = Object.assign({}, state.rows[orig], { [col]: value });
           renderPreview();
           renderPrintArea(false);
+          renderCsvPreview();
         },
       }
     );
     highlightPreviewRow();
   }
 
+  function csvEscape(v) {
+    const s = String(v ?? '');
+    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function renderCsvPreview() {
+    if (!els.csvPreview) return;
+    const headers = state.headers.length ? state.headers : ['PRODUCTO','CODIGO','FECHA','EMPRESA','PRECIO'];
+    const lines = [headers.join(',')];
+    state.rows.forEach((r) => lines.push(headers.map((h) => csvEscape(r[h])).join(',')));
+    els.csvPreview.value = lines.join('\n');
+  }
+
   function highlightPreviewRow() {
     els.dataTable.querySelectorAll('tbody tr').forEach((tr) => {
-      tr.classList.toggle('previewing', Number(tr.dataset.index) === state.previewIndex);
+      const idxInFilter = Number(tr.dataset.index);
+      const orig = state.visibleIndexes[idxInFilter];
+      tr.classList.toggle('previewing', orig === state.previewIndex);
     });
   }
 
