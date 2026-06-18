@@ -41,28 +41,47 @@
         <aside class="panel side">
           <div class="tabs" role="tablist">
             <button class="tab active" data-tab="data">Datos</button>
+            <button class="tab" data-tab="inventory">Inventario</button>
             <button class="tab" data-tab="design">Diseño</button>
             <button class="tab" data-tab="settings">Impresión</button>
             <button class="tab" data-tab="help">Guía</button>
           </div>
 
           <section class="tab-panel active" id="tab-data">
-            <h2>1. Cargar base de datos</h2>
+            <h2>1. Información de etiquetas</h2>
+
             <label class="file-drop">
               <input id="csvFile" type="file" accept=".csv,text/csv" />
-              <span>Subir CSV</span>
-              <small>Campos sugeridos: PRODUCTO, CODIGO, FECHA, EMPRESA, PRECIO</small>
+              <span>📁 Subir CSV (opcional)</span>
+              <small>Campos: PRODUCTO, CODIGO, FECHA, EMPRESA, PRECIO</small>
             </label>
 
-            <label class="field">
-              <span>Pegar CSV manualmente</span>
-              <textarea id="csvText" rows="6" spellcheck="false" placeholder="PRODUCTO,CODIGO,FECHA,EMPRESA,PRECIO&#10;BLOWER RENAULT TWINGO 96-16,001003100024B05188,30/05/2026,ALISAN PG S.A.S,$320.000"></textarea>
-            </label>
-            <button id="btnParseText" class="secondary full">Cargar texto pegado</button>
+            <details class="advanced-settings-toggle" open>
+              <summary>✏️ Configurar manualmente una etiqueta</summary>
+              <div class="advanced-settings-content">
+                <label class="field"><span>Producto</span><input id="manualProducto" type="text" placeholder="BLOWER RENAULT TWINGO 96-16" /></label>
+                <label class="field"><span>Código</span><input id="manualCodigo" type="text" placeholder="001003100024B05188" /></label>
+                <div class="grid-2 compact">
+                  <label class="field"><span>Fecha</span><input id="manualFecha" type="text" placeholder="30/05/2026" /></label>
+                  <label class="field"><span>Precio</span><input id="manualPrecio" type="text" placeholder="$320.000" /></label>
+                </div>
+                <label class="field"><span>Empresa</span><input id="manualEmpresa" type="text" placeholder="ALISAN PG S.A.S" /></label>
+                <div class="print-actions">
+                  <button id="btnManualAdd" type="button" class="primary">+ Agregar a la lista</button>
+                  <button id="btnManualClear" type="button" class="ghost">Vaciar lista</button>
+                </div>
+              </div>
+            </details>
 
             <label class="field">
               <span>Empresa por defecto</span>
               <input id="defaultCompany" value="ALISAN PG S.A.S" />
+            </label>
+
+            <label class="field">
+              <span>🔎 Buscar / filtrar productos</span>
+              <input id="searchBox" type="search" placeholder="Buscar por nombre, código, empresa…" />
+              <small>Filtra la tabla. Solo lo que veas aquí se podrá seleccionar para imprimir.</small>
             </label>
 
             <div class="field">
@@ -70,7 +89,6 @@
               <div id="editableCols" class="chip-row">
                 <small>Carga datos para elegir columnas.</small>
               </div>
-              <small>Marca solo las columnas que vas a corregir manualmente en la tabla.</small>
             </div>
 
             <div class="table-toolbar">
@@ -78,7 +96,37 @@
               <button id="btnSelectNone" class="ghost">Ninguna</button>
             </div>
             <div id="dataTable" class="data-table"></div>
+
+            <label class="field" style="margin-top:14px;">
+              <span>📄 CSV generado (todo lo que se va a imprimir)</span>
+              <textarea id="csvPreview" rows="6" spellcheck="false" readonly style="font-family:monospace;font-size:11px;"></textarea>
+              <small>Actualizado automáticamente. Copia este texto si quieres guardarlo.</small>
+            </label>
           </section>
+
+          <section class="tab-panel" id="tab-inventory">
+            <h2>📦 Confirmar inventario</h2>
+            <p class="muted-help">Lee con la cámara del celular cada código de barras y la app suma una unidad. Verde si la cantidad coincide con lo que tenías que imprimir.</p>
+
+            <div class="inv-actions-top">
+              <button type="button" class="primary big-cta" onclick="AlisanInventory.openScanModal()">
+                📷 Iniciar conteo con cámara
+              </button>
+              <button type="button" class="secondary" onclick="AlisanInventory.openListModal()">📋 Ver inventario</button>
+            </div>
+
+            <div class="grid-2 compact" style="margin-top:14px;">
+              <button type="button" class="secondary full" onclick="AlisanInventory.downloadExcel()">⬇️ Descargar Excel</button>
+              <button type="button" class="primary full" onclick="AlisanInventory.sendToOffice()">📧 Enviar a oficina</button>
+            </div>
+
+            <button type="button" class="ghost full" style="margin-top:10px;" onclick="AlisanInventory.resetCounts()">↺ Reiniciar conteo</button>
+
+            <div class="notice" style="margin-top:14px;">
+              💡 El conteo se basa en los productos cargados en la pestaña <strong>Datos</strong>. Cada lectura suma 1. Si lees un código que no está en la lista, aparecerá en amarillo como "extra".
+            </div>
+          </section>
+
 
           <section class="tab-panel" id="tab-design">
             <h2>2. Diseño del sticker</h2>
