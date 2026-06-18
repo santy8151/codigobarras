@@ -385,6 +385,49 @@
       </section>
     </main>
 
+    <!-- Inventory: scan modal -->
+    <div id="invScanModal" class="inv-modal" aria-hidden="true">
+      <div class="inv-modal-card">
+        <div class="inv-modal-head">
+          <h3>📷 Confirmar inventario</h3>
+          <button type="button" class="ghost" onclick="AlisanInventory.closeScanModal()">✕ Cerrar</button>
+        </div>
+        <div class="inv-video-wrap">
+          <video id="invVideo" playsinline muted></video>
+          <div class="inv-scan-overlay"></div>
+        </div>
+        <p id="invScanStatus" class="muted-help">Pidiendo permiso de cámara…</p>
+        <div id="invScanFeedback"></div>
+        <div id="invManualBox" class="field" style="display:none;margin-top:8px;">
+          <span>Escribir código a mano</span>
+          <div style="display:flex;gap:6px;">
+            <input id="invManualInput" type="text" placeholder="Código de barras" />
+            <button type="button" class="primary" onclick="AlisanInventory.submitManual()">Sumar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory: list modal -->
+    <div id="invListModal" class="inv-modal" aria-hidden="true">
+      <div class="inv-modal-card inv-modal-card--wide">
+        <div class="inv-modal-head">
+          <h3>📋 Inventario actual</h3>
+          <button type="button" class="ghost" onclick="AlisanInventory.closeListModal()">✕ Cerrar</button>
+        </div>
+        <div class="grid-2 compact" style="margin-bottom:10px;">
+          <button type="button" class="secondary full" onclick="AlisanInventory.downloadExcel()">⬇️ Descargar Excel</button>
+          <button type="button" class="primary full" onclick="AlisanInventory.sendToOffice()">📧 Enviar a oficina</button>
+        </div>
+        <div class="data-table">
+          <table>
+            <thead><tr><th>Producto</th><th>Código</th><th>Esperado</th><th>Confirmado</th><th>Δ</th><th></th></tr></thead>
+            <tbody id="invTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div id="printRoot" aria-hidden="true"></div>
     <style id="printStyle"></style>
 
@@ -400,6 +443,7 @@
     <script src="src/application/use-cases/BuildPrintPagesUseCase.js"></script>
     <script src="src/presentation/components/LabelRenderer.js"></script>
     <script src="src/presentation/components/DataTable.js"></script>
+    <script src="src/presentation/InventoryController.js"></script>
     <script src="src/presentation/AppController.js"></script>
 
     <script>
