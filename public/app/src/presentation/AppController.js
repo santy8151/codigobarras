@@ -37,13 +37,15 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
 
   function bindElements() {
     [
-      'previewPage', 'printRoot', 'printStyle', 'csvFile', 'csvText', 'btnParseText', 'defaultCompany',
+      'previewPage', 'printRoot', 'printStyle', 'csvFile', 'defaultCompany',
       'copies', 'skipLabels', 'dataTable', 'btnSelectAll', 'btnSelectNone', 'btnLoadExample',
       'btnPrintTop', 'btnPrintOneTest', 'btnResetSettings', 'btnSaveSettings', 'totalToPrint', 'printSizeBox',
       'presetId', 'presetNote', 'pageWidthMm', 'pageHeightMm', 'labelWidthMm', 'labelHeightMm', 'columns',
       'columnGapMm', 'marginLeftMm', 'marginTopMm', 'marginRightMm', 'marginBottomMm', 'labelPaddingMm',
       'barcodeHeightMm', 'productFontMm', 'dateFontMm', 'codeFontMm', 'footerFontMm', 'priceFontMm',
-      'rotate', 'debugOutlines', 'blankColumn', 'editableCols'
+      'rotate', 'debugOutlines', 'blankColumn', 'editableCols',
+      'searchBox', 'manualProducto', 'manualCodigo', 'manualFecha', 'manualEmpresa', 'manualPrecio',
+      'btnManualAdd', 'btnManualClear', 'csvPreview'
     ].forEach((id) => { els[id] = $(id); });
   }
 
