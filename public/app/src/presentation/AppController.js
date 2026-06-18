@@ -71,12 +71,48 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
       event.target.value = '';
     });
 
-    els.btnParseText.addEventListener('click', () => loadCsv(els.csvText.value));
     els.btnLoadExample.addEventListener('click', () => {
-      els.csvText.value = sampleCsv;
       loadCsv(sampleCsv);
       toast('Ejemplo cargado. Imprime una prueba antes de tirar todo el rollo.');
     });
+
+    if (els.searchBox) {
+      els.searchBox.addEventListener('input', () => {
+        state.searchQuery = els.searchBox.value || '';
+        renderDataTable();
+        renderTotal();
+      });
+    }
+
+    if (els.btnManualAdd) {
+      els.btnManualAdd.addEventListener('click', () => {
+        const producto = (els.manualProducto.value || '').trim();
+        const codigo = (els.manualCodigo.value || '').trim();
+        if (!producto && !codigo) { toast('Escribe al menos producto o código.'); return; }
+        const newRow = {
+          PRODUCTO: producto || 'PRODUCTO',
+          CODIGO: codigo || '000000000000',
+          FECHA: (els.manualFecha.value || '').trim(),
+          EMPRESA: (els.manualEmpresa.value || '').trim() || state.defaultCompany,
+          PRECIO: (els.manualPrecio.value || '').trim(),
+        };
+        if (!state.headers.length) state.headers = ['PRODUCTO','CODIGO','FECHA','EMPRESA','PRECIO'];
+        state.rows.push(newRow);
+        state.selectedIndexes.add(state.rows.length - 1);
+        ['manualProducto','manualCodigo','manualFecha','manualPrecio'].forEach((id)=>{ if(els[id]) els[id].value=''; });
+        if (els.manualProducto) els.manualProducto.focus();
+        render();
+        toast('Etiqueta agregada a la lista.');
+      });
+    }
+
+    if (els.btnManualClear) {
+      els.btnManualClear.addEventListener('click', () => {
+        if (!confirm('¿Borrar todas las etiquetas de la lista?')) return;
+        state.rows = []; state.selectedIndexes = new Set(); state.previewIndex = 0;
+        render();
+      });
+    }
 
     els.btnSelectAll.addEventListener('click', () => {
       state.selectedIndexes = new Set(state.rows.map((_, index) => index));
