@@ -18,7 +18,11 @@
           </div>
         </div>
         <div class="topbar-actions">
-          <button type="button" class="primary" onclick="AlisanInventory.openListModal()">📦 Ver inventario</button>
+          <a id="tiendaLink" class="shop-link" href="https://alisanpg.com" target="_blank" rel="noopener">🛒 Ir a la tienda de la página</a>
+          <button type="button" class="primary" onclick="AlisanInventory.openScanModal('create')">➕ Crear pedido de producto</button>
+          <button type="button" class="secondary" onclick="AlisanInventory.openScanModal('delete')">🗑️ Eliminar producto</button>
+          <button type="button" class="primary" onclick="AlisanInventory.openScanModal('confirm')">📷 Confirmar productos</button>
+          <button type="button" class="ghost" onclick="AlisanInventory.openListModal()">📦 Ver inventario</button>
         </div>
       </header>
 
