@@ -455,6 +455,48 @@ RESISTENCIA VELOCIDADES CHEVROLET DMAX,RE6257480301,04/06/2026,ALISAN PG S.A.S,$
   global.AlisanGetRows = function() { return state.rows.slice(); };
   global.AlisanGetHeaders = function() { return state.headers.slice(); };
 
+  function ensureHeaders() {
+    if (!state.headers.length) state.headers = ['PRODUCTO','CODIGO','FECHA','EMPRESA','PRECIO'];
+  }
+  function findRowIndexByCode(code) {
+    const c = String(code || '').trim();
+    if (!c) return -1;
+    return state.rows.findIndex((r) => String(r.CODIGO || r.codigo || '').trim() === c);
+  }
+  global.AlisanFindRowByCode = function(code) {
+    const i = findRowIndexByCode(code);
+    return i >= 0 ? Object.assign({}, state.rows[i]) : null;
+  };
+  global.AlisanAddRow = function(row) {
+    ensureHeaders();
+    const newRow = {
+      PRODUCTO: (row.PRODUCTO || '').trim() || 'PRODUCTO',
+      CODIGO: (row.CODIGO || '').trim() || '000000000000',
+      FECHA: (row.FECHA || '').trim(),
+      EMPRESA: (row.EMPRESA || '').trim() || state.defaultCompany,
+      PRECIO: (row.PRECIO || '').trim(),
+    };
+    state.rows.push(newRow);
+    state.selectedIndexes.add(state.rows.length - 1);
+    render();
+    return true;
+  };
+  global.AlisanUpdateRowByCode = function(code, patch) {
+    const i = findRowIndexByCode(code);
+    if (i < 0) return false;
+    state.rows[i] = Object.assign({}, state.rows[i], patch || {});
+    render();
+    return true;
+  };
+  global.AlisanDeleteRowByCode = function(code) {
+    const i = findRowIndexByCode(code);
+    if (i < 0) return false;
+    state.rows.splice(i, 1);
+    state.selectedIndexes = new Set(state.rows.map((_, idx) => idx));
+    render();
+    return true;
+  };
+
   function printCurrent(onlyOneTest) {
     if (!state.rows.length) {
       loadCsv(sampleCsv);
